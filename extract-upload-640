@@ -1,10 +1,16 @@
 #!/bin/bash
 
-IMG="$1"
+# This script can extract cover from comicbook in .cbz (zip files)
+# and upload it to casimages (redim 640)
+# Then display casimages url using zenity (+ add [img] BBCODE)
+
+comic="$1"
+fullcover=""
 ftype=""
+cover=""
 
 function get-file-type {
-    mimetype=$(file --mime-type -b "$1")
+    mimetype=$(file --mime-type -b "${1}")
     case "$mimetype" in
         image/png) ftype="png";;
         image/jpeg) ftype="jpg";;
@@ -14,9 +20,18 @@ function get-file-type {
     esac
 }
 
-# MAIN
+# Find cover (first jpg)
+echo Before unzip
+fullcover=$(unzip -Z1 "$comic" | grep -i '[.]jpe\?g$'| head -n 1) || zenity --error --text="Pas le bon format (seulement jpg/jpeg/png)." || exit 1
 
-get-file-type "$1"
+# echo "$fullcover"
+
+# unzip cover
+unzip  -j "$comic" "$fullcover"
+
+cover=$(basename "$fullcover")
+
+get-file-type "$cover"
 
 # This first GET initialize "cookie"
 curl -s -c "$HOME/.casimagecookie" GET https://www.casimages.com/ -H "Accept: application/json" >/dev/null
@@ -43,7 +58,7 @@ img_id=$(curl -s 'https://www.casimages.com/upload_ano_multi.php' \
 -H 'Cache-Control: no-cache' \
 -H 'Connection: keep-alive' \
 -H 'Pragma: no-cache' \
---form "Filedata=@${IMG};type=image/${ftype}" \
+--form "Filedata=@${cover};type=image/${ftype}" \
 -H 'Accept: application/json' \
 -H 'X-Requested-With: XMLHttpRequest' \
 -H 'Referer: https://www.casimages.com/' \
@@ -69,3 +84,4 @@ zenity --text-info --title="URL casimages" \
 # Clean up
 rm "$HOME/urlcasi.txt"
 rm "$HOME/.casimagecookie"
+rm "$cover"

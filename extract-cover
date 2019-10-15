@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Extract first jpg/jpeg found in cbz/zip file
+
+comic="$1"
+cover=""
+
+cover=$(unzip -Z1 "$comic" | grep -i '[.]jpe\?g$' | head -n 1)
+
+echo "$cover"
+
+unzip  -j "$comic" "$cover"
