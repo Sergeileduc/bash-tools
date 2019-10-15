@@ -1,0 +1,53 @@
+#!/bin/bash
+
+IMG=$1
+
+
+curl -s -c cookie GET https://www.casimages.com/ -H "Accept: application/json" >/dev/null
+
+
+curl -s 'https://www.casimages.com/ajax/s_ano_resize.php?dim=640' \
+-H 'Pragma: no-cache' \
+-H 'Sec-Fetch-Site: same-origin' \
+-H 'DNT: 1' \
+-H 'Accept-Encoding: gzip, deflate, br' \
+-H 'Accept-Language: fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7' \
+-H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.75 Safari/537.36' \
+-H 'Sec-Fetch-Mode: cors' \
+-H 'Accept: text/plain, */*; q=0.01' \
+-H 'Cache-Control: no-cache' \
+-H 'X-Requested-With: XMLHttpRequest' \
+-b cookie \
+-H 'Connection: keep-alive' \
+-H 'Referer: https://www.casimages.com/' --compressed
+
+img_id=$(curl -s 'https://www.casimages.com/upload_ano_multi.php' \
+-H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:69.0) Gecko/20100101 Firefox/69.0' \
+-H 'Cache-Control: no-cache' \
+-H 'Connection: keep-alive' \
+-H 'Pragma: no-cache' \
+--form "Filedata=@${IMG};type=image/jpg" \
+-H 'Accept: application/json' \
+-H 'X-Requested-With: XMLHttpRequest' \
+-H 'Referer: https://www.casimages.com/' \
+-H 'Accept-Language: fr-FR,fr;q=0.8,en-US;q=0.5,en;q=0.3' --compressed \
+-b cookie)
+
+# echo "${img_id}"
+
+# Curl the result page and regex to find "Grande" url
+# There's two Grande resutls -> x is an array
+x=($(curl -s "https://www.casimages.com/codes_ano_multi.php?img=${img_id}" | grep -Po "Grande : .*?value='\\K(.*?)>"))
+
+# delete 2 last characters
+url=${x[1]::-2}
+
+# url="https://nsa40.casimages.com/img/2019/10/15/191015010105909794.jpg"
+
+echo "[img]$url[/img]" > urlcasi.txt
+
+zenity --text-info --title="URL casimages" \
+       --width=600 --height=80 --filename=urlcasi.txt
+
+rm urlcasi.txt
+rm cookie
