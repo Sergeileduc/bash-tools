@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# This script uploads a picture (jpeg or png) on casimages, using 640 redim
+# And return casimages image url in zenity box (needs zenity)
+
 IMG="$1"
 ftype=""
 
