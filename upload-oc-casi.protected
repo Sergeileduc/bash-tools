@@ -119,9 +119,8 @@ comic_url=$(get_link)
 fullcover=""
 ftype=""
 cover=""
-zenity --error --text="Pas le bon format (seulement jpg/jpeg/png)." || exit 1
 
-fullcover=$(unzip -Z1 "${local_file}" | grep -i '[.]jpe\?g$' | sort | head -n 1) || 
+fullcover=$(unzip -Z1 "${local_file}" | grep -i '[.]jpe\?g$' | sort | head -n 1) || zenity --error --text="Pas le bon format (seulement jpg/jpeg/png)." || exit 1
 
 # unzip cover
 unzip  -j "${local_file}" "$fullcover"
