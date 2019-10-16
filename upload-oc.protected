@@ -10,6 +10,13 @@ server="server"
 local_file="$1"
 API_PATH=ocs/v1.php/apps/files_sharing/api/v1
 
+function url_exists {
+    url=$(curl -s -I -X PROPFIND -u "$user:$pass" "$server/remote.php/dav/files/$user/$cloud_dir/" 2>/dev/null | \
+          head -n 1 | \
+          cut -d$' ' -f2)
+    echo "$url"
+}
+
 # Upload on owncloud
 function upload_single_file {
     echo "Uploading ${1} dans ${2}"
@@ -70,6 +77,25 @@ fi
 cloud_dir=${choice// /%20}
 
 echo "$cloud_dir"
+
+# cloud_dir is empty ?
+if [ -z "$cloud_dir" ]; then
+    echo "Cloud dir is empty"
+    zenity --error --text="Choisissez un dossier Owncloud !!."
+    exit 1
+fi
+
+# test if cloud dir is OK
+status=$(url_exists)
+echo "$status"
+
+if [ "$status" == "207" ]; then
+    echo "Folder is valid. Continue."
+else
+    echo "Invalid folder."
+    zenity --error --text="Le dossier owncloud est invalide."
+    exit 1
+fi
 
 #upload file
 upload_single_file "$local_file" "$cloud_dir"
