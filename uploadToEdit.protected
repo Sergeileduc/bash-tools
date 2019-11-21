@@ -1,0 +1,72 @@
+#!/bin/bash
+
+# This script uploads a local file ($1) on owncloud
+# Remote dir is choosen inside zenity GUI
+# And returns BBCODE for name and url
+
+user="User"
+pass="password"
+server="server"
+local_file="$1"
+API_PATH=ocs/v1.php/apps/files_sharing/api/v1
+
+function url_exists {
+    url=$(curl -s -I -X PROPFIND -u "$user:$pass" "$server/remote.php/dav/files/$user/$cloud_dir/" 2>/dev/null | \
+          head -n 1 | \
+          cut -d$' ' -f2)
+    echo "$url"
+}
+
+# Upload on owncloud
+function upload_single_file {
+    echo "Uploading ${1} dans ${2}"
+    curl -u "$user:$pass" -T "${1}" "${server}/remote.php/dav/files/${user}/${2}/"  2>&1 | \
+    stdbuf -oL tr '\r' '\n' | sed -u 's/^ *\([0-9][0-9]*\).*\( [0-9].*$\)/\1/' | \
+    zenity --progress \
+           --title="Upload" \
+           --percentage=0 \
+           --auto-close
+}
+
+#get share link
+function get_link {
+	xml=$(curl -s -u "$user:$pass" "$server/$API_PATH/shares" \
+     --data "path=/$cloud_dir/$local_file&shareType=3&permissions=1&name=$local_file")
+	url=$(grep -oPm1 "(?<=<url>)[^<]+" <<< "$xml")
+	echo "$url"
+}
+
+
+cloud_dir="Edit"
+
+echo "$cloud_dir"
+
+# cloud_dir is empty ?
+if [ -z "$cloud_dir" ]; then
+    echo "Cloud dir is empty"
+    zenity --error --text="Choisissez un dossier Owncloud !!."
+    exit 1
+fi
+
+# test if cloud dir is OK
+status=$(url_exists)
+echo "$status"
+
+if [ "$status" == "207" ]; then
+    echo "Folder is valid. Continue."
+else
+    echo "Invalid folder."
+    zenity --error --text="Le dossier owncloud est invalide."
+    exit 1
+fi
+
+#upload file
+upload_single_file "$local_file" "$cloud_dir"
+#share and get public share link
+echo "Getting share link"
+url=$(get_link)
+out="[url=${url}]${local_file}[/url]"
+
+zenity --entry --width 900 --title="URL de partage" --text="URL de partage" --entry-text="$out"
+
+exit

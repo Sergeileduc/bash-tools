@@ -5,6 +5,7 @@
 *.png
 upload-oc
 upload-oc-casi
+uploadToEdit
 test*
 bak
 credentials
