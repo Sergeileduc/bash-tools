@@ -2,11 +2,28 @@
 
 # Extract first jpg/jpeg found in cbz/zip file
 
-comic="$1"
+FILE="$1"
 cover=""
 
-cover=$(unzip -Z1 "$comic" | grep -i '[.]jpe\?g$' | sort | head -n 1)
+function unarchive-cover {
+    # If / Elif : unarchive file (rar or zip)
+    # Test if archive is RAR
+    if [[ $(file --mime-type -b "$FILE") == application/x-rar ]]; then
+        echo "$FILE is rared"
+        cover=$(unrar lb "$FILE" | grep -i '[.]jpe\?g$' | sort | head -n 1)
+	echo "$cover"
+	unrar e "$FILE" "$cover"
 
-echo "$cover"
+    # Test if archive is ZIP
+    elif [[ $(file --mime-type -b "$FILE") == application/zip ]]; then
+        echo "$FILE is zipped"
+        cover=$(unzip -Z1 "$FILE" | grep -i '[.]jpe\?g$' | sort | head -n 1)
+	echo "$cover"
+	unzip  -j "$FILE" "$cover"
+    else
+        echo "$FILE is not RAR or ZIP"
+        exit 1
+    fi
+}
 
-unzip  -j "$comic" "$cover"
+unarchive-cover
