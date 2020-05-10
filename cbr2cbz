@@ -1,0 +1,11 @@
+#!/bin/bash
+
+echo Converting $1 to cbz format.
+DIR="${1%.*}"
+mkdir "$DIR";
+unrar e ./"$1" -o "$DIR";
+zip -r "$DIR".cbz "$DIR";
+rm -r "$DIR";
+#Remove or comment out this line if you want to keep cbr files
+rm "$1";
+echo Conversion of $1 successful!
